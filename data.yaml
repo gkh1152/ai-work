@@ -1,4 +1,4 @@
-# dataset path
+# dataset path ....a little strange
 train: ./images/train
 val: ./images/test
 test: ./images/test
