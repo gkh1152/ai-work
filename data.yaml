@@ -1,7 +1,7 @@
 # dataset path
-train: ./images/train
-val: ./images/test
-test: ./images/test
+train: ./datasets/images/train
+val: ./datasets/images/test
+test: ./datasets/images/test
 
 # number of classes
 nc: 6
