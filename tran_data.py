@@ -2,54 +2,55 @@ import os
 import shutil
 import random
 
-# 设置数据路径和划分比例
-data_path = "datasets"
-output_path = "datasets"
-split_ratios = {"train": 0.7, "val": 0.2, "test": 0.1}
+# 随机种子
+random.seed(42)
 
-# 确保输出文件夹存在
-for split in ["train", "val", "test"]:
-    os.makedirs(os.path.join(output_path, split, "images"), exist_ok=True)
-    os.makedirs(os.path.join(output_path, split, "labels"), exist_ok=True)
+# 原始数据路径
+original_dataset_path = '/mnt/workspace/data/China_MotorBike/train'
+original_images_path = os.path.join(original_dataset_path, 'images')
+original_labels_path = os.path.join(original_dataset_path, 'labels')
 
-# 遍历每个国家的文件夹
-for country in os.listdir(data_path):
-    country_path = os.path.join(data_path, country)
-    if not os.path.isdir(country_path):
-        continue
+# 目标数据路径
+target_dataset_path = '/mnt/workspace/yolo/ultralytics-main/datasets'
+target_images_path = os.path.join(target_dataset_path, 'images')
+target_labels_path = os.path.join(target_dataset_path, 'labels')
 
-    # 获取 images 和 labels 文件夹路径
-    images_path = os.path.join(country_path, "images")
-    labels_path = os.path.join(country_path, "labels")
+# 创建目标子目录
+splits = ['train', 'val', 'test']
+for split in splits:
+    os.makedirs(os.path.join(target_images_path, split), exist_ok=True)
+    os.makedirs(os.path.join(target_labels_path, split), exist_ok=True)
 
-    # 获取所有文件列表，并打乱顺序
-    image_files = sorted(os.listdir(images_path))
-    random.shuffle(image_files)
+# 获取所有图像文件
+all_images = [f for f in os.listdir(original_images_path) if f.endswith(('.jpg', '.png'))]
+random.shuffle(all_images)
 
-    # 按比例划分数据
-    num_files = len(image_files)
-    train_split = int(num_files * split_ratios["train"])
-    val_split = int(num_files * (split_ratios["train"] + split_ratios["val"]))
+# 划分比例
+total_files = len(all_images)
+train_split = int(total_files * 0.7)
+val_split = train_split + int(total_files * 0.2)
 
-    splits = {
-        "train": image_files[:train_split],
-        "val": image_files[train_split:val_split],
-        "test": image_files[val_split:]
-    }
+splits_data = {
+    'train': all_images[:train_split],
+    'val': all_images[train_split:val_split],
+    'test': all_images[val_split:]
+}
 
-    # 移动文件到目标文件夹
-    for split, files in splits.items():
-        for file in files:
-            # 移动图片文件
-            shutil.copy(
-                os.path.join(images_path, file),
-                os.path.join(output_path, split, "images", file)
-            )
-            # 移动对应的标签文件
-            label_file = file.replace(".jpg", ".txt").replace(".png", ".txt")  # 假设标签文件为 .txt 格式
-            shutil.copy(
-                os.path.join(labels_path, label_file),
-                os.path.join(output_path, split, "labels", label_file)
-            )
+# 移动文件
+for split, files in splits_data.items():
+    for image_file in files:
+        # 原始图像路径
+        src_image_path = os.path.join(original_images_path, image_file)
+        dst_image_path = os.path.join(target_images_path, split, image_file)
 
-print("数据划分完成！")
+        # 原始标注路径
+        label_file = image_file.rsplit('.', 1)[0] + '.txt'  # 替换扩展名
+        src_label_path = os.path.join(original_labels_path, label_file)
+        dst_label_path = os.path.join(target_labels_path, split, label_file)
+
+        # 复制文件
+        shutil.copy(src_image_path, dst_image_path)
+        if os.path.exists(src_label_path):  # 确保标注文件存在
+            shutil.copy(src_label_path, dst_label_path)
+
+print("数据集划分完成！")
